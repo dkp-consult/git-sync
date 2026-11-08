@@ -1,4 +1,4 @@
-## Unreleased
+## 0.1.1 - Sync All Statuses
 * Fixed: completed and dropped notes are synchronized. Inkdrop 6 hides them from `db.notes.all()` unless the query names their status, so they were never exported, and a note that became completed or dropped was reported as "deleted on the Inkdrop side". Every status is now read; templates and the trash stay excluded
 
 ## 0.1.0 - Git Sync
