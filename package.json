@@ -1,7 +1,7 @@
 {
   "name": "git-sync",
   "main": "./lib/git-sync",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Bidirectional synchronization between Inkdrop notes and a Git repository",
   "keywords": [
     "inkdrop",

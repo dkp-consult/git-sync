@@ -41,6 +41,15 @@ test("lists notes with notebook paths, tag names and ISO-convertible dates, skip
   assert.equal(notes[0].rev, "1-a");
 });
 
+test("lists notes of every status, including completed and dropped, that Inkdrop hides by default", async () => {
+  const db = fakeDb();
+  const base = { bookId: "book:work", doctype: "markdown", body: "", createdAt: 1, updatedAt: 1, timestamp: 1 };
+  for (const status of ["none", "onHold", "completed", "dropped"]) db.notes.store.set(`note:${status}`, { ...base, _id: `note:${status}`, _rev: "1-a", title: status, status });
+  db.notes.store.set("note:template", { ...base, _id: "note:template", _rev: "1-a", title: "T", bookId: "template", status: "completed" });
+  const notes = await new InkdropAdapter(db, options).listNotes();
+  assert.deepEqual(notes.map(note => note.status).sort(), ["active", "completed", "dropped", "none", "onHold"]);
+});
+
 test("creates an imported note Inkdrop accepts, with notebooks and tags created on demand", async () => {
   const db = fakeDb();
   const adapter = new InkdropAdapter(db, options);
