@@ -143,6 +143,25 @@ test("a full sync cycle imports an agent note Inkdrop accepts, then goes quiet",
   } finally { r.cleanup(); }
 });
 
+test("completed and dropped notes are exported and keep syncing instead of being reported as deleted", async () => {
+  const r = await remote();
+  const h = host({ config: settings(r.folder("sync"), { "git-sync.mode": "sync" }) });
+  const plugin = freshPlugin();
+  const done = { _id: "note:done", bookId: "book:work", title: "Done", doctype: "markdown", body: "", status: "completed", createdAt: 1, updatedAt: 1, timestamp: 1, _rev: "1-a" };
+  h.db.notes.store.set(done._id, done);
+  try {
+    await plugin.runCycle(true);
+    const first = await plugin.runCycle(false);
+    assert.deepEqual(first.actions.filter(a => a.type === "export").map(a => a.title).sort(), ["A", "Done"]);
+    h.db.notes.store.set("note:a", { ...h.db.notes.store.get("note:a"), status: "dropped", updatedAt: 1793985663700, _rev: "2-b" });
+    const second = await plugin.runCycle(false);
+    assert.deepEqual(second.warnings, []);
+    const file = await git(r.bare, "show", `main:notes/${stableSyncId("note:a")}.md`);
+    assert.match(file, /^status: "dropped"$/m);
+    assert.match(await git(r.bare, "show", `main:notes/${stableSyncId("note:done")}.md`), /^status: "completed"$/m);
+  } finally { r.cleanup(); }
+});
+
 test("a push rejected because an agent pushed meanwhile is merged and retried", async () => {
   const r = await remote();
   host({ config: settings(r.folder("sync"), { "git-sync.mode": "sync" }) });

@@ -27,8 +27,11 @@ function collection(docs, validate) {
   const store = new Map(docs.map(doc => [doc._id, { _rev: "1-a", ...doc }]));
   return {
     store,
-    async all({ limit = 20, skip = 0 } = {}) {
-      const values = [...store.values()];
+    // Like Inkdrop 6.3.0, notes whose status is completed or dropped are
+    // listed only when the query names their status.
+    async all({ limit = 50, skip = 0, status } = {}) {
+      const shown = status === undefined ? ["none", "active", "onHold"] : [].concat(status);
+      const values = [...store.values()].filter(doc => validate !== validateNote || shown.includes(doc.status || "none"));
       // Shape returned by Inkdrop 6.3.0 (checked against the running app).
       const rows = values.slice(skip, skip + limit).map(doc => ({ doc }));
       const cursor = skip + rows.length < values.length ? { index: "notes", limit, skip: skip + rows.length } : null;
